@@ -24,7 +24,10 @@ fi
 
 # ── ssh check ─────────────────────────────────────────────────
 say "Checking GitHub SSH access"
-if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+# ssh -T always exits 1 on GitHub (no shell), so check the message, not the exit code
+ssh_out="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T git@github.com 2>&1 || true)"
+if ! printf '%s' "$ssh_out" | grep -q "successfully authenticated"; then
+  printf '%s\n' "$ssh_out"
   warn "SSH to GitHub failed. Set up a key first: ssh-keygen -t ed25519 && cat ~/.ssh/id_ed25519.pub"
   exit 1
 fi
