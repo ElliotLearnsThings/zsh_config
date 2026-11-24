@@ -1,578 +1,170 @@
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
-export PATH="/Applications/MATLAB_R2024b.app/bin:$PATH"
+# ~/.zshrc — native zsh, no oh-my-zsh / starship
+# Palette: Tokyo Night (Omarchy default)
 
-#ZSH_THEME="powerlevel9k/powerlevel9k"
-
-ZSH_DISABLE_COMPFIX=true
-
-if type brew &>/dev/null; then
-	FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
-
-	autoload -Uz compinit
-	compinit
+# ── Environment ──────────────────────────────────────────────
+export EDITOR=nvim VISUAL=nvim PAGER=less
+export LANG=${LANG:-en_US.UTF-8}
+typeset -U path
+path=($HOME/.local/bin $HOME/bin $HOME/go/bin $HOME/.cargo/bin $path)
+# inside proot Debian: drop Termux's bin so its android-built node etc. don't leak in
+path=(${path:#/data/data/com.termux/*})
+# nvm (lazy: only loads when you first call node/npm/npx/nvm, keeps startup fast)
+export NVM_DIR=$HOME/.nvm
+if [[ -s $NVM_DIR/nvm.sh ]]; then
+  _nvm_default=($NVM_DIR/versions/node/*(N/om[1]))
+  [[ -n $_nvm_default ]] && path=($_nvm_default/bin $path)
+  nvm() { unfunction nvm; source $NVM_DIR/nvm.sh; nvm "$@" }
 fi
 
-# Path to your Oh My Zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
+# ── History ──────────────────────────────────────────────────
+HISTFILE=~/.zsh_history HISTSIZE=50000 SAVEHIST=50000
+setopt hist_ignore_all_dups hist_ignore_space hist_reduce_blanks \
+       share_history extended_history inc_append_history
+setopt auto_cd auto_pushd pushd_ignore_dups interactive_comments \
+       no_beep prompt_subst
 
-# Function to toggle the secondary display rotation between 90 and 0 degrees on macOS
-ttw() {
-  # Get the current rotation of the secondary display
-  local current_rotation=$(system_profiler SPDisplaysDataType | grep -A 10 "VG248" | grep "Rotation" | awk '{print $2}')
-  
-  # If no secondary display is found, inform the user and exit
-  if [[ -z "$current_rotation" ]]; then
-    echo "No secondary display detected."
-    return 1
-  fi
-  
-  # Toggle the rotation
-  if [[ "$current_rotation" == "90" ]]; then
-    # Set rotation to 0 degrees (normal)
-    echo "Rotating secondary display to 0 degrees (normal)..."
-    displayplacer "id:2 degree:0"
-  else
-    # Set rotation to 90 degrees
-    echo "Rotating secondary display to 90 degrees..."
-    displayplacer "id:2 degree:90"
-  fi
-  
-  echo "Display rotation toggled successfully."
-}
+# ── Completion ───────────────────────────────────────────────
+autoload -Uz compinit && compinit -d ~/.cache/zcompdump
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|[._-]=* r:|=*'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*:descriptions' format '%F{#565f89}-- %d --%f'
+zmodload zsh/complist
 
-# Note: This function requires 'displayplacer' to be installed
-# Install it with: brew tap jakehilborn/jakehilborn && brew install displayplacer
-
-
-function pact() {
-	source .venv/bin/activate
-}
-
-function pdact() {
-	deactivate	
-}
-
-function killport() {
-   lsof -ti :$1 | xargs kill
-}
-
-# Quickstart new pvim project (python with nvim)
-function pvim() {
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install debugpy tqdm numpy basedpyright "$@"
-		pip install --upgrade pip
-		touch main.py
-		echo "\ndef main():\n    return\n\nif __name__ == \"__main__\":\n    main()\n" >> main.py
-		nvim main.py
-}
-
-# Quickstart new gvim project (go with vim)
-function gvim() {
-	go mod init $1
-	touch main.go
-	echo 'package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello, World!")\n}' >> main.go
-	nvim main.go
-}
-
-# Quickstart new rvim project (rust with vim)
-function rvim() {
-    cargo init
-    nvim src/main.rs
-}
-
-function vim() {
-	nvim "$@"
-}
-
-function gg() {
-	git add "$1"
-	git commit -m "$2"
-}
-
-function acp() {
-  git add .
-  git commit -m "$1"
-  git push
-}
-
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time Oh My Zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME=""
-
-
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in $ZSH/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
-
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
-
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
-
-# Uncomment one of the following lines to change the auto-update behavior
-# zstyle ':omz:update' mode disabled  # disable automatic updates
-# zstyle ':omz:update' mode auto      # update automatically without asking
-# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
-
-# Uncomment the following line to change how often to auto-update (in days).
-# zstyle ':omz:update' frequency 13
-
-# Uncomment the following line if pasting URLs and other text is messed up.
-# DISABLE_MAGIC_FUNCTIONS="true"
-
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
-
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
-
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
-
-# Uncomment the following line to display red dots whilst waiting for completion.
-# You can also set it to another string to have that shown instead of the default red dots.
-# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
-# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
-# COMPLETION_WAITING_DOTS="true"
-
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
-
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-
-plugins=(
-	git
-  yarn 
-  web-search 
-  jsontools
-  macports
-  node 
-  sudo
-  thor
-  docker
-	z
-)
-
-
-# User configuration
-
-# export MANPATH="/usr/local/man:$MANPATH"
-
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='nvim'
-
-
-#test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-
-# Reload the plugin to highlight the commands each time Iterm2 starts 
-
-
-### VISUAL CUSTOMISATION ### 
-
-# Elements options of left prompt (remove the @username context)
-# POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir rbenv vcs)
-# Elements options of right prompt
-# POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status root_indicator background_jobs history time)
-
-
-
-# Add a second prompt line for the command
-# POWERLEVEL9K_PROMPT_ON_NEWLINE=true
-
-# Add a space in the first prompt 
-# POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX="%f"
-
-# Visual customisation of the second prompt line
-#local user_symbol="$"
-#if [[ $(print -P "%#") =~ "#" ]]; then
-    #user_symbol = "#"
-#fi
-# POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="%{%B%F{black}%K{yellow}%} $user_symbol%{%b%f%k%F{yellow}%} %{%f%}"
-
-
-# Change the git status to red when something isn't committed and pushed
-# POWERLEVEL9K_VCS_MODIFIED_BACKGROUND='red'
-
-# Add a new line after the global prompt 
-# POWERLEVEL9K_PROMPT_ADD_NEWLINE=true
-
-
-# Colorise the top Tabs of Iterm2 with the same color as background
-# Just change the 18/26/33 wich are the rgb values 
-#echo -e "\033]6;1;bg;red;brightness;18\a"
-#echo -e "\033]6;1;bg;green;brightness;26\a"
-#echo -e "\033]6;1;bg;blue;brightness;33\a"
-
-# Compilation flags
-# export ARCHFLAGS="-arch $(uname -m)"
-
-# Set personal aliases, overriding those provided by Oh My Zsh libs,
-# plugins, and themes. Aliases can be placed here, though Oh My Zsh
-# users are encouraged to define aliases within a top-level file in
-# the $ZSH_CUSTOM folder, with .zsh extension. Examples:
-# - $ZSH_CUSTOM/aliases.zsh
-# - $ZSH_CUSTOM/macos.zsh
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-# echo '
-# ┌─────────────────────────────────────────────────┐
-# │ ┌─┐ ElliotLearnsThings Terminal v1.0      ┐ □ × │
-# │ └─┘																						  │
-# │                                                 │
-# │  ███╗   ███╗ █████╗ ██████╗ ██████╗             │
-# │  ████╗ ████║██╔══██╗██╔══██╗██╔══██╗            │
-# │  ██╔████╔██║███████║██║  ██║██║  ██║            │
-# │  ██║╚██╔╝██║██╔══██║██║  ██║██║  ██║            │
-# │  ██║ ╚═╝ ██║██║  ██║██████╔╝██████╔╝            │
-# │  ╚═╝     ╚═╝╚═╝  ╚═╝╚═════╝ ╚═════╝             │
-# │                                                 │
-# │  System: $(uname -s) $(uname -r)                │
-# │  User: $(whoami)@$(hostname)                    │
-# │  Shell: $SHELL                                  │
-# │                                                 │
-# └─────────────────────────────────────────────────┘
-# '
-
-eval "$(starship init zsh)"
-
-python3 ascii.py
-
-setopt hist_ignore_all_dups
-
-function ascii() {
-	python3 ~/ascii.py
-}
-
-set -o vi
+# ── Vi mode ──────────────────────────────────────────────────
 bindkey -v
+export KEYTIMEOUT=1
 bindkey -v '^?' backward-delete-char
+bindkey '^R' history-incremental-search-backward
+bindkey -M menuselect 'h' vi-backward-char 'j' vi-down-line-or-history \
+                      'k' vi-up-line-or-history 'l' vi-forward-char
+autoload -Uz edit-command-line && zle -N edit-command-line
+bindkey -M vicmd 'v' edit-command-line
 
-# BIG ts shit
+# beam cursor in insert, block in normal; prompt char follows mode
+VI_MODE=ins
+zle-keymap-select() {
+  if [[ $KEYMAP == vicmd ]]; then VI_MODE=cmd; print -n '\e[2 q'
+  else VI_MODE=ins; print -n '\e[6 q'; fi
+  zle reset-prompt
+}
+zle-line-init() { VI_MODE=ins; print -n '\e[6 q' }
+zle -N zle-keymap-select; zle -N zle-line-init
 
-# tvim() - Create a TypeScript project with debugging support and open in Neovim
-tvim() {
-  local project_name=${1:-ts-project}
-  local main_file=${2:-main.ts}
-  
-  # Check if directory exists already
-  if [[ -d "$project_name" ]]; then
-    echo "Directory '$project_name' already exists. Choose a different name or delete the existing directory."
-    return 1
+# ── Prompt ───────────────────────────────────────────────────
+# left:  [duration] [user@host over ssh] ❯   (red on error, ❮ in normal mode)
+# right: dir  branch status  venv
+autoload -Uz vcs_info add-zsh-hook
+zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:git:*' check-for-changes true
+zstyle ':vcs_info:git:*' stagedstr '%F{#9ece6a}+%f'
+zstyle ':vcs_info:git:*' unstagedstr '%F{#e0af68}!%f'
+zstyle ':vcs_info:git:*' formats ' %F{#bb9af7} %b%f%c%u%m'
+zstyle ':vcs_info:git:*' actionformats ' %F{#bb9af7} %b%f %F{#f7768e}(%a)%f%c%u%m'
+zstyle ':vcs_info:git*+set-message:*' hooks git-extra
++vi-git-extra() {
+  [[ -n $(git ls-files --others --exclude-standard --directory 2>/dev/null | head -1) ]] \
+    && hook_com[misc]+='%F{#7dcfff}?%f'
+  local ab=($(git rev-list --left-right --count HEAD...@{u} 2>/dev/null))
+  (( ${ab[1]:-0} )) && hook_com[misc]+=" %F{#7dcfff}⇡${ab[1]}%f"
+  (( ${ab[2]:-0} )) && hook_com[misc]+=" %F{#7dcfff}⇣${ab[2]}%f"
+}
+
+_cmd_start=0 _cmd_dur=''
+_prompt_preexec() { _cmd_start=$EPOCHREALTIME }
+_prompt_precmd() {
+  vcs_info
+  _cmd_dur=''
+  if (( _cmd_start )); then
+    local d=$(( EPOCHREALTIME - _cmd_start ))
+    (( d >= 3 )) && _cmd_dur="%F{#e0af68}$( (( d >= 60 )) && printf '%dm%ds' $((d/60)) $((d%60)) || printf '%.1fs' $d)%f "
+    _cmd_start=0
   fi
-
-  echo "🚀 Creating TypeScript project: $project_name"
-  
-  # Create project directory
-  mkdir -p "$project_name"
-  cd "$project_name"
-  
-  # Initialize npm project with default values
-  echo "📦 Initializing npm project..."
-  npm init -y > /dev/null
-  
-  # Update package.json with useful scripts
-  echo "📝 Configuring package.json..."
-  cat > package.json << EOF
-{
-  "name": "${project_name}",
-  "version": "1.0.0",
-  "description": "TypeScript project with debugging support",
-  "main": "dist/${main_file%.ts}.js",
-  "scripts": {
-    "start": "tsx ${main_file}",
-    "dev": "tsx --watch ${main_file}",
-    "debug": "tsx --inspect-brk ${main_file}",
-    "build": "tsc",
-    "test": "jest"
-  },
-  "keywords": ["typescript", "debug"],
-  "author": "",
-  "license": "ISC"
+  print   # blank line between commands
 }
-EOF
-  
-  # Install TypeScript and related dependencies
-  echo "📚 Installing dependencies..."
-  npm install --save-dev typescript tsx ts-node @types/node jest ts-jest @types/jest > /dev/null
-  
-  # Create tsconfig.json
-  echo "⚙️ Creating TypeScript configuration..."
-  cat > tsconfig.json << EOF
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "esModuleInterop": true,
-    "sourceMap": true,
-    "outDir": "dist",
-    "strict": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
-  },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist"]
-}
-EOF
-  
-  # Create a debug-ready main.ts file
-  echo "🔧 Creating main TypeScript file with debugging support..."
-  cat > "$main_file" << EOF
-/**
- * ${project_name} - Main TypeScript file
- * Run with:
- *   - npm start     (normal execution)
- *   - npm run debug (debugging mode with inspector)
- */
+zmodload zsh/datetime
+add-zsh-hook preexec _prompt_preexec
+add-zsh-hook precmd  _prompt_precmd
 
-// A delay function useful for setting breakpoints
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => {
-    console.log(\`Waiting for \${ms}ms...\`);
-    setTimeout(resolve, ms);
-  });
+_ssh_host() { [[ -n $SSH_CONNECTION ]] && print -n '%F{#7dcfff}%n@%m%f ' }
+_venv() { [[ -n $VIRTUAL_ENV ]] && print -n " %F{#e0af68} ${VIRTUAL_ENV:t:h:t}%f" }
+_char() { [[ $VI_MODE == cmd ]] && print -n '❮' || print -n '❯' }
+export VIRTUAL_ENV_DISABLE_PROMPT=1
+
+PROMPT='${_cmd_dur}$(_ssh_host)%(?.%F{#9ece6a}.%F{#f7768e})$(_char)%f '
+RPROMPT='%F{#7aa2f7}%~%f${vcs_info_msg_0_}$(_venv)'
+PROMPT2='%F{#565f89}▸▹%f '
+
+# ── Colors & aliases ─────────────────────────────────────────
+alias ls='ls --color=auto --group-directories-first'
+alias ll='ls -lAh' la='ls -A'
+alias grep='grep --color=auto'
+alias ..='cd ..' ...='cd ../..'
+alias g=git gs='git status -sb' gl='git log --oneline --graph -20' gd='git diff'
+alias t='tmux new -A -s main'
+command -v eza  >/dev/null && alias ls='eza --group-directories-first' ll='eza -la --git' lt='eza --tree -L 2'
+command -v bat  >/dev/null && alias cat='bat -p'
+command -v batcat >/dev/null && alias cat='batcat -p'   # debian names it batcat
+
+# ── Your functions ───────────────────────────────────────────
+vim()     { nvim "$@" }
+pact()    { source .venv/bin/activate }
+pdact()   { deactivate }
+gg()      { git add "$1" && git commit -m "$2" }
+acp()     { git add . && git commit -m "$1" && git push }
+killport() {
+  if command -v lsof >/dev/null; then lsof -ti :$1 | xargs -r kill
+  else fuser -k $1/tcp; fi
 }
 
-// Log helpers with colors
-const log = {
-  info: (message: string) => console.log(\`\x1b[36m[INFO]\x1b[0m \${message}\`),
-  success: (message: string) => console.log(\`\x1b[32m[SUCCESS]\x1b[0m \${message}\`),
-  warn: (message: string) => console.log(\`\x1b[33m[WARNING]\x1b[0m \${message}\`),
-  error: (message: string) => console.log(\`\x1b[31m[ERROR]\x1b[0m \${message}\`)
-};
-
-// Example class to demonstrate debugging
-class DebugExample {
-  private counter: number = 0;
-  
-  increment(amount: number = 1): number {
-    this.counter += amount;
-    return this.counter;
-  }
-  
-  getValue(): number {
-    return this.counter;
-  }
+# python project quickstart
+pvim() {
+  python3 -m venv .venv && source .venv/bin/activate
+  pip install --upgrade pip
+  pip install debugpy tqdm numpy basedpyright "$@"
+  [[ -f main.py ]] || printf '\ndef main():\n    return\n\n\nif __name__ == "__main__":\n    main()\n' > main.py
+  nvim main.py
 }
-
-// Main application function
-async function main(): Promise<void> {
-  log.info("Application starting...");
-  
-  const example = new DebugExample();
-  
-  // Good breakpoint location
-  log.info(\`Initial counter value: \${example.getValue()}\`);
-  
-  // Process some values (good for debugging)
-  for (let i = 1; i <= 3; i++) {
-    await delay(1000);
-    const newValue = example.increment(i);
-    log.success(\`Counter incremented by \${i} to \${newValue}\`);
-  }
-  
-  // Another good breakpoint location
-  const finalValue = example.getValue();
-  log.info(\`Final counter value: \${finalValue}\`);
-  
-  await delay(1000);
-  log.success("Application completed successfully!");
+# go project quickstart
+gvim() {
+  go mod init ${1:?module name}
+  [[ -f main.go ]] || printf 'package main\n\nimport "fmt"\n\nfunc main() {\n\tfmt.Println("Hello, World!")\n}\n' > main.go
+  nvim main.go
 }
+# rust project quickstart
+rvim() { cargo init && nvim src/main.rs }
 
-// Run the main function
-main().catch(error => {
-  log.error(\`Unhandled error: \${error.message}\`);
-  console.error(error);
-});
+# tvim (TypeScript scaffold) lives in its own file to keep this one readable
+[[ -f ~/.zsh/tvim.zsh ]] && source ~/.zsh/tvim.zsh
 
-// Keep process alive for attaching debugger
-if (process.execArgv.some(arg => arg.includes('--inspect'))) {
-  log.info("Running in debug mode - process will stay alive for debugging");
-  setInterval(() => {}, 1000);
-}
-EOF
-  
-  # Create .gitignore
-  echo "📄 Creating .gitignore..."
-  cat > .gitignore << EOF
-node_modules/
-dist/
-coverage/
-*.log
-.DS_Store
-EOF
+# ── Plugins (apt: zsh-autosuggestions zsh-syntax-highlighting) ──
+for f in /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh \
+         /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh; do
+  [[ -f $f ]] && source $f && break
+done
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#565f89'
+bindkey '^ ' autosuggest-accept
 
-  # Create a README.md file with debugging instructions
-  echo "📚 Creating README with debugging instructions..."
-  cat > README.md << EOF
-# ${project_name}
+command -v zoxide >/dev/null && eval "$(zoxide init zsh)"   # replaces omz `z`
+command -v fzf >/dev/null && [[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]] \
+  && source /usr/share/doc/fzf/examples/key-bindings.zsh
+export FZF_DEFAULT_OPTS='--color=bg+:#292e42,fg:#c0caf5,hl:#7aa2f7,fg+:#c0caf5,hl+:#7dcfff,info:#e0af68,prompt:#9ece6a,pointer:#bb9af7,marker:#9ece6a,spinner:#bb9af7,header:#565f89 --border=rounded'
 
-A TypeScript project with debugging support.
+# syntax highlighting must be sourced last
+for f in /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
+         /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh; do
+  [[ -f $f ]] && source $f && break
+done
+typeset -gA ZSH_HIGHLIGHT_STYLES
+ZSH_HIGHLIGHT_STYLES[command]='fg=#7aa2f7'
+ZSH_HIGHLIGHT_STYLES[builtin]='fg=#7dcfff'
+ZSH_HIGHLIGHT_STYLES[alias]='fg=#7aa2f7'
+ZSH_HIGHLIGHT_STYLES[function]='fg=#7aa2f7'
+ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#f7768e'
+ZSH_HIGHLIGHT_STYLES[path]='fg=#c0caf5,underline'
+ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#9ece6a'
+ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#9ece6a'
+ZSH_HIGHLIGHT_STYLES[comment]='fg=#565f89'
 
-## Getting Started
-
-\`\`\`bash
-# Install dependencies
-npm install
-
-# Run in development mode
-npm run dev
-
-# Run with debugger
-npm run debug
-\`\`\`
-
-## Debugging in Neovim
-
-1. Start the application with the debugger:
-   \`\`\`
-   npm run debug
-   \`\`\`
-
-2. In Neovim, attach to the running process:
-   \`\`\`
-   :lua require('dap').continue()
-   \`\`\`
-
-3. Set breakpoints with:
-   \`\`\`
-   :lua require('dap').toggle_breakpoint()
-   \`\`\`
-
-4. Use \`<leader>dc\` to continue execution
-   Use \`<leader>dn\` to step over
-   Use \`<C-p>\` to step into
-   Use \`<leader>do\` to step out
-EOF
-
-  # Create a .nvim.lua local config file for the project
-  echo "🔧 Creating Neovim local config..."
-  cat > .nvim.lua << EOF
--- Local Neovim configuration for TypeScript debugging
--- This file will be automatically loaded if you have the nvim-projectconfig plugin
-
--- Set up DAP for TypeScript
-local dap = require('dap')
-
--- Configure DAP for TypeScript
-dap.configurations.typescript = {
-  {
-    name = 'Attach to Process',
-    type = 'node',
-    request = 'attach',
-    port = 9229,
-    restart = false,
-    sourceMaps = true,
-    skipFiles = {'<node_internals>/**'}
-  }
-}
-
--- Match JavaScript configurations
-dap.configurations.javascript = dap.configurations.typescript
-
--- Set up a command for the typical debugging workflow
-vim.api.nvim_create_user_command('Debug', function()
-  -- Open a terminal split and start the debugger
-  vim.cmd('vsplit | terminal npm run debug')
-  
-  -- Wait for debugger to start, then attach
-  vim.defer_fn(function()
-    -- Open DAP UI
-    require('dapui').open()
-    
-    -- Attach the debugger
-    vim.defer_fn(function()
-      require('dap').continue()
-    end, 1000)
-  end, 2000)
-end, {})
-
--- Create convenient keymap
-vim.keymap.set('n', '<leader>dd', "<CMD>Debug<CR>", { noremap = true, silent = true })
-
-print("TypeScript debugging configuration loaded!")
-EOF
-
-  # Create .vscode directory for those who might use VS Code
-  mkdir -p .vscode
-  cat > .vscode/launch.json << EOF
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Launch Program",
-      "skipFiles": ["<node_internals>/**"],
-      "program": "\${workspaceFolder}/${main_file}",
-      "runtimeArgs": ["-r", "tsx/register"],
-      "outFiles": ["\${workspaceFolder}/dist/**/*.js"],
-      "sourceMaps": true
-    },
-    {
-      "type": "node",
-      "request": "attach",
-      "name": "Attach to Process",
-      "port": 9229,
-      "skipFiles": ["<node_internals>/**"],
-      "sourceMaps": true
-    }
-  ]
-}
-EOF
-
-  # Success message
-  echo ""
-  echo "✅ TypeScript project created successfully!"
-  echo "📂 Project: $project_name"
-  echo "📝 Main file: $main_file"
-  echo ""
-  echo "📋 Commands:"
-  echo "  npm start     - Run the application"
-  echo "  npm run dev   - Run with auto-reload on changes"
-  echo "  npm run debug - Run with debugger attached"
-  echo "  npm run build - Compile TypeScript to JavaScript"
-  echo ""
-  echo "🛠️ Opening in Neovim..."
-  
-  # Open the main file in Neovim
-  nvim "$main_file"
-}
-
+# machine-local overrides (not in git)
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
